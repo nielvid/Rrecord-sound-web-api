@@ -1,0 +1,119 @@
+  
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Record Video and Sound with Web API</title>
+  <meta http-equiv="X-UA-Compatible" content="chrome=1"/>
+
+</head>
+<body>
+<button id="btn-one">record</button><br />
+<button id="btn-two">stop recording</button>
+<button id="btn-three">play</button>
+
+  <audio id="audio1" autoplay muted></audio>
+ <!-- <audio id="audio2"  autoplay muted></audio> ->
+  <!--<input type="file" accept="image/*;capture=camera">-->
+  
+  
+    <script type="text/javascript">
+	
+	const btn1 = document.querySelector('button#btn-one')
+	const btn2 = document.querySelector('button#btn-two')
+	const btn3 = document.querySelector('button#btn-three')
+	
+	
+	btn1.addEventListener('click', getAudiofromMic)
+	btn2.addEventListener('click', stopRecording)
+	btn3.addEventListener('click', playRecordedSound)
+	
+	
+	
+	let mediaRecorder;
+	let recordedSound 
+	
+	 function stopRecording(){
+  mediaRecorder.stop();
+  
+  
+}
+	
+	function playRecordedSound(){
+	const audio = document.querySelector('audio#audio1');
+	const blob = new Blob(recordedSound, {type: 'audio/webm'});
+	audio.src = null;
+	audio.srcObject = null;
+	audio.src = window.URL.createObjectURL(blob);
+	
+	audio.controls = true;
+	audio.play();
+	}
+	
+   async function getAudiofromMic(){
+  
+	
+	// 1. get the user's mic to allow audio(stream) source
+	  try{
+	  const stream = await navigator.mediaDevices.getUserMedia ({audio: true, video: false})
+		handleStream(stream)
+	  }
+	  catch(err){
+	  console.error(err)
+	  }
+	  
+	  
+	 //2. function to handleStream  Pass the stream to audio element src
+	 
+	 function handleStream(stream){
+	  console.log('getUserMedia() got stream:', stream);
+	 window.stream = stream;
+
+  const audio = document.querySelector('audio#audio1');
+   //const audio = document.querySelector('audio#audio2');
+  audio.srcObject = stream;
+ 
+	 }
+	 
+	 startRecording()
+	 //3. function to start recording
+	function startRecording() {
+  recordedSound = [];
+  let options = {mimeType: 'audio/webm;codecs=opus'};
+  
+  try {
+    mediaRecorder = new MediaRecorder(window.stream, options);
+	
+  } catch (e) {
+    console.error('Exception while creating MediaRecorder:', e);
+    return;
+  }
+console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
+
+  mediaRecorder.onstop = (event) => {
+    console.log('Recorder stopped: ', event);
+    console.log('Recorded Blobs: ', recordedSound);
+  };
+  
+  mediaRecorder.ondataavailable = handleDataAvailable;
+  mediaRecorder.start();
+  
+  
+}
+	 
+	function handleDataAvailable(event) {
+  if (event.data && event.data.size > 0) {
+    recordedSound.push(event.data);
+  }
+}
+	
+	
+}
+
+   
+
+   
+    
+  </script>
+</body>
+</html>
